@@ -36,12 +36,19 @@ class GameManager:
         self.player_rooms = {}  # player_sid: room_id
         self.live_games = []
         self.ended_games = []
+        self.all_games = []
 
     def join_room(self, room_id, player_sid, role, color=None):
         if room_id not in self.rooms:
             self.rooms[room_id] = GameState()
+            self.live_games.append(room_id)
 
         game_state = self.rooms[room_id]
+
+        # Check if room already has 2 players
+        if game_state.white_player and game_state.black_player:
+            # Force join as watcher if room is full
+            role = 'watcher'
 
         if role == 'player':
             if color == 'random':
@@ -52,7 +59,7 @@ class GameManager:
             elif color == 'black' and game_state.black_player is None:
                 game_state.black_player = player_sid
             else:
-                # If requested color is taken, assign as watcher
+                # If requested color is taken or room is full, assign as watcher
                 role = 'watcher'
 
         if role == 'watcher':
@@ -174,6 +181,7 @@ class GameManager:
         }
 
         self.ended_games.append(game_info)
+        self.all_games.append(game_info)
         return game_info
 
     def handle_disconnect(self, player_sid):
@@ -213,5 +221,6 @@ class GameManager:
     def get_all_games(self):
         return {
             'live_games': self.live_games,
-            'ended_games': self.ended_games
+            'ended_games': self.ended_games,
+            'all_games': self.all_games
         }

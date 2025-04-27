@@ -141,3 +141,22 @@ button:hover {
     width: 100% !important;
   }
 }
+.game-card {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #3498db;
+  margin-bottom: 15px;
+}
+
+.game-time {
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+.games-container {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+}

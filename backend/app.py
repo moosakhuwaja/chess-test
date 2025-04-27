@@ -36,13 +36,18 @@ def handle_disconnect():
 @socketio.on('join_room')
 def handle_join_room(data):
     room_id = data['room_id']
-    role = data.get('role', 'watcher')  # player or watcher
-    color = data.get('color', None)  # white or black
+    role = data.get('role', 'watcher')
+    color = data.get('color', None)
 
     game_state = game_manager.join_room(room_id, request.sid, role, color)
     join_room(room_id)
 
-    emit('game_state', game_state.to_dict(), room=request.sid)
+    # Notify client if they were forced to be watcher
+    response = game_state.to_dict()
+    if role == 'player' and request.sid not in [game_state.white_player, game_state.black_player]:
+        response['forced_watcher'] = True
+
+    emit('game_state', response, room=request.sid)
     emit('room_update', game_manager.get_room_info(room_id), room=room_id)
 
 
@@ -86,6 +91,26 @@ def handle_accept_draw(data):
 @app.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory(app.static_folder, filename)
+
+
+@socketio.on('check_room')
+def handle_check_room(data):
+    room_id = data['room_id']
+
+    def callback(response):
+        emit('check_room_response', response)
+
+    if room_id in game_manager.rooms:
+        game_state = game_manager.rooms[room_id]
+        callback({
+            'is_full': bool(game_state.white_player and game_state.black_player),
+            'room_id': room_id
+        })
+    else:
+        callback({
+            'is_full': False,
+            'room_id': room_id
+        })
 
 
 if __name__ == '__main__':

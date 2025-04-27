@@ -1,4 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Colors for legal move highlighting
+  const whiteSquareGrey = "#a9a9a9";
+  const blackSquareGrey = "#696969";
+
   // Extract room ID from URL
   const pathParts = window.location.pathname.split("/");
   const roomId = pathParts[pathParts.length - 1];
@@ -9,17 +13,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const role = urlParams.get("role") || "watcher";
   const color = urlParams.get("color") || null;
 
+  // Initialize chess.js game for client-side validation
+  const game = new Chess();
+
   // Initialize chessboard
   const board = Chessboard("board", {
     draggable: true,
     position: "start",
     orientation: "white", // Default orientation
-    onDrop: handleMove,
     pieceTheme:
-      "/assets/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png"
+      "/assets/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png",
+    onDragStart: onDragStart,
+    onDrop: onDrop,
+    onMouseoutSquare: onMouseoutSquare,
+    onMouseoverSquare: onMouseoverSquare,
+    onSnapEnd: onSnapEnd
   });
-  // Initialize chess.js game for client-side validation
-  const game = new Chess();
 
   // Connect to Socket.IO
   const socket = io();
@@ -38,6 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle game state updates
   socket.on("game_state", (state) => {
+    if (state.forced_watcher) {
+      alert("Room is full. You have joined as a watcher.");
+      currentRole = "watcher";
+    }
     updateGameState(state);
   });
 
@@ -71,7 +84,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Update game state from server
   function updateGameState(state) {
-    game.load(state.fen); // Set board orientation based on player color
+    game.load(state.fen);
+
+    // Set board orientation based on player color
     if (currentRole === "player") {
       if (socket.id === state.white_player) {
         playerColor = "white";
@@ -110,17 +125,104 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("move-history").appendChild(moveEl);
     });
 
-    // Set player color if we're a player
-    if (currentRole === "player") {
-      if (socket.id === state.white_player) {
-        playerColor = "white";
-      } else if (socket.id === state.black_player) {
-        playerColor = "black";
-      }
-    }
-
     // Show/hide controls based on role and turn
     updateControls(state);
+  }
+
+  // Remove grey highlighting from squares
+  function removeGreySquares() {
+    $("#board .square-55d63").css("background", "");
+  }
+
+  // Highlight a square with grey
+  function greySquare(square) {
+    const $square = $("#board .square-" + square);
+    const background = $square.hasClass("black-3c85d")
+      ? blackSquareGrey
+      : whiteSquareGrey;
+    $square.css("background", background);
+  }
+
+  // Handle drag start
+  function onDragStart(source, piece) {
+    // Do not pick up pieces if:
+    // 1. Game is over
+    // 2. User is not a player
+    // 3. It's not their turn
+    // 4. They try to pick up opponent's piece
+    if (
+      gameStatus !== "ongoing" ||
+      currentRole !== "player" ||
+      (playerColor === "white" && !piece.startsWith("w")) ||
+      (playerColor === "black" && !piece.startsWith("b"))
+    ) {
+      return false;
+    }
+  }
+
+  // Handle piece drop
+  function onDrop(source, target) {
+    removeGreySquares();
+
+    // Try to make the move
+    const move = game.move({
+      from: source,
+      to: target,
+      promotion: "q" // Always promote to queen for simplicity
+    });
+
+    // If illegal move, snap back
+    if (move === null) return "snapback";
+
+    // Send move to server
+    socket.emit("make_move", {
+      room_id: roomId,
+      move: move.san
+    });
+
+    updateMoveHistory(move.san);
+    return true;
+  }
+
+  // Handle mouseover square - show legal moves
+  function onMouseoverSquare(square, piece) {
+    // Only show moves for players during their turn
+    if (currentRole !== "player" || gameStatus !== "ongoing") return;
+
+    // Only show moves for player's own pieces
+    if (
+      (playerColor === "white" && piece && !piece.startsWith("w")) ||
+      (playerColor === "black" && piece && !piece.startsWith("b"))
+    ) {
+      return;
+    }
+
+    // Get possible moves for this square
+    const moves = game.moves({
+      square: square,
+      verbose: true
+    });
+
+    // Exit if no moves available
+    if (moves.length === 0) return;
+
+    // Highlight the square they moused over
+    greySquare(square);
+
+    // Highlight possible target squares
+    for (let i = 0; i < moves.length; i++) {
+      greySquare(moves[i].to);
+    }
+  }
+
+  // Handle mouseout square - remove highlights
+  function onMouseoutSquare() {
+    removeGreySquares();
+  }
+
+  // Handle snap end - update board position
+  function onSnapEnd() {
+    board.position(game.fen());
   }
 
   // Update game status display
@@ -159,40 +261,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       controls.classList.add("hidden");
     }
-  }
-
-  // Handle piece movement
-  function handleMove(source, target) {
-    // Only allow moves if we're a player and it's our turn
-    if (currentRole !== "player" || gameStatus !== "ongoing") {
-      return "snapback";
-    }
-
-    if (
-      (playerColor === "white" && game.turn() !== "w") ||
-      (playerColor === "black" && game.turn() !== "b")
-    ) {
-      return "snapback";
-    }
-
-    // Try to make the move
-    const move = game.move({
-      from: source,
-      to: target,
-      promotion: "q" // Always promote to queen for simplicity
-    });
-
-    // If illegal move, snap back
-    if (move === null) return "snapback";
-
-    // Send move to server
-    socket.emit("make_move", {
-      room_id: roomId,
-      move: move.san
-    });
-
-    updateMoveHistory(move.san);
-    return true;
   }
 
   // Update move history display
