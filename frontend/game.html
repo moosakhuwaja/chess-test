@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="/js/game.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Chess Game - <span id="room-id-display"></span></h1>
+
+        <div class="game-container">
+            <div id="board" style="width: 400px"></div>
+
+            <div class="game-info">
+                <div id="game-status">Loading game...</div>
+                <div id="players">
+                    <div>White: <span id="white-player">-</span></div>
+                    <div>Black: <span id="black-player">-</span></div>
+                    <div>Watchers: <span id="watchers-count">0</span></div>
+                </div>
+
+                <div id="move-history-container">
+                    <h3>Move History</h3>
+                    <div id="move-history"></div>
+                </div>
+
+                <div id="game-controls" class="hidden">
+                    <button id="resign-btn">Resign</button>
+                    <button id="offer-draw-btn">Offer Draw</button>
+                    <div id="draw-offer" class="hidden">
+                        <p>Draw offered! <button id="accept-draw-btn">Accept</button></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

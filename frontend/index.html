@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Chess</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/home.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Multiplayer Chess</h1>
+
+        <div class="join-section">
+            <h2>Join or Create Game</h2>
+            <div class="form-group">
+                <label for="room-id">Room ID:</label>
+                <input type="text" id="room-id" placeholder="Enter room ID or leave empty to create new">
+            </div>
+
+            <div class="form-group">
+                <label>Join as:</label>
+                <select id="join-role">
+                    <option value="player">Player</option>
+                    <option value="watcher">Watcher</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="color-selection">
+                <label>Color:</label>
+                <select id="player-color">
+                    <option value="random">Random</option>
+                    <option value="white">White</option>
+                    <option value="black">Black</option>
+                </select>
+            </div>
+
+            <button id="join-btn">Join Game</button>
+        </div>
+
+        <div class="games-list">
+            <h2>Live Games</h2>
+            <div id="live-games" class="games-container"></div>
+
+            <h2>Ended Games</h2>
+            <div id="ended-games" class="games-container"></div>
+        </div>
+    </div>
+</body>
+
+</html>
