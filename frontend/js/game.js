@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
     color: color
   });
 
-  // Handle game state updates
   socket.on("game_state", (state) => {
     if (state.forced_watcher) {
       alert("Room is full. You have joined as a watcher.");
@@ -54,15 +53,32 @@ document.addEventListener("DOMContentLoaded", () => {
     updateGameState(state);
   });
 
-  // Handle move made by opponent
-  socket.on("move_made", (data) => {
-    game.move(data.move);
-    board.position(game.fen());
-    updateMoveHistory(data.move);
+  // Add request_state handler
+  socket.on("request_state_response", (state) => {
+    updateGameState(state);
+  });
 
-    if (data.status !== "ongoing") {
-      gameStatus = data.status;
-      updateGameStatus();
+  socket.on("move_made", (data) => {
+    try {
+      const move = game.move(data.move);
+      if (!move) {
+        console.error("Invalid move received from server:", data.move);
+        socket.emit("request_state", { room_id: roomId });
+        return;
+      }
+      board.position(game.fen());
+      updateMoveHistory(data.move);
+
+      // Request updated game state to get new scores
+      socket.emit("request_state", { room_id: roomId });
+
+      if (data.status !== "ongoing") {
+        gameStatus = data.status;
+        updateGameStatus();
+      }
+    } catch (e) {
+      console.error("Error processing move:", e);
+      socket.emit("request_state", { room_id: roomId });
     }
   });
 
@@ -82,11 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Update game state from server
   function updateGameState(state) {
     game.load(state.fen);
 
-    // Set board orientation based on player color
     if (currentRole === "player") {
       if (socket.id === state.white_player) {
         playerColor = "white";
@@ -96,13 +110,11 @@ document.addEventListener("DOMContentLoaded", () => {
         board.orientation("black");
       }
     } else {
-      // Default to white orientation for watchers
       board.orientation("white");
     }
 
     board.position(state.fen);
 
-    // Update player info
     document.getElementById("white-player").textContent = state.white_player
       ? state.white_player.substring(0, 8)
       : "Waiting...";
@@ -113,19 +125,25 @@ document.addEventListener("DOMContentLoaded", () => {
       ? state.watchers.length
       : 0;
 
-    // Update game status
+    // Update scores
+    document.getElementById("white-score").textContent = state.white_score || 0;
+    document.getElementById("black-score").textContent = state.black_score || 0;
+
     gameStatus = state.status;
     updateGameStatus();
 
-    // Update move history
     document.getElementById("move-history").innerHTML = "";
     state.move_history.forEach((move, i) => {
       const moveEl = document.createElement("div");
       moveEl.textContent = `${i + 1}. ${move}`;
-      document.getElementById("move-history").appendChild(moveEl);
+      document
+        .getElementById("move-history")
+        .insertBefore(
+          moveEl,
+          document.getElementById("move-history").firstChild
+        );
     });
 
-    // Show/hide controls based on role and turn
     updateControls(state);
   }
 
@@ -181,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     updateMoveHistory(move.san);
+
     return true;
   }
 
@@ -274,7 +293,9 @@ document.addEventListener("DOMContentLoaded", () => {
       moveEl.textContent = move;
     }
 
-    document.getElementById("move-history").appendChild(moveEl);
+    document
+      .getElementById("move-history")
+      .insertBefore(moveEl, document.getElementById("move-history").firstChild);
     document.getElementById("move-history").scrollTop =
       document.getElementById("move-history").scrollHeight;
   }
@@ -304,4 +325,72 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("beforeunload", () => {
     socket.emit("leave_room", { room_id: roomId });
   });
+  function displayCapturedPieces(captured, containerId, color) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    const pieceMap = {
+      1: "p", // Pawn
+      2: "n", // Knight
+      3: "b", // Bishop
+      4: "r", // Rook
+      5: "q" // Queen
+    };
+    captured.forEach((pieceType) => {
+      const pieceEl = document.createElement("div");
+      pieceEl.className = "captured-piece";
+      pieceEl.style.backgroundImage = `url(/assets/chessboardjs-1.0.0/img/chesspieces/wikipedia/${color}${pieceMap[pieceType]}.png)`;
+      container.appendChild(pieceEl);
+    });
+  }
+
+  function updateGameState(state) {
+    game.load(state.fen);
+
+    if (currentRole === "player") {
+      if (socket.id === state.white_player) {
+        playerColor = "white";
+        board.orientation("white");
+      } else if (socket.id === state.black_player) {
+        playerColor = "black";
+        board.orientation("black");
+      }
+    } else {
+      board.orientation("white");
+    }
+
+    board.position(state.fen);
+
+    document.getElementById("white-player").textContent = state.white_player
+      ? state.white_player.substring(0, 8)
+      : "Waiting...";
+    document.getElementById("black-player").textContent = state.black_player
+      ? state.black_player.substring(0, 8)
+      : "Waiting...";
+    document.getElementById("watchers-count").textContent = state.watchers
+      ? state.watchers.length
+      : 0;
+
+    // Update scores and captured pieces
+    document.getElementById("white-score").textContent = state.white_score || 0;
+    document.getElementById("black-score").textContent = state.black_score || 0;
+    displayCapturedPieces(state.white_captured || [], "white-captured", "w");
+    displayCapturedPieces(state.black_captured || [], "black-captured", "b");
+
+    gameStatus = state.status;
+    updateGameStatus();
+
+    document.getElementById("move-history").innerHTML = "";
+    state.move_history.forEach((move, i) => {
+      const moveEl = document.createElement("div");
+      moveEl.textContent = `${i + 1}. ${move}`;
+      document
+        .getElementById("move-history")
+        .insertBefore(
+          moveEl,
+          document.getElementById("move-history").firstChild
+        );
+    });
+
+    updateControls(state);
+  }
 });

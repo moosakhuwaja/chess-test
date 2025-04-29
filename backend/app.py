@@ -113,5 +113,17 @@ def handle_check_room(data):
         })
 
 
+@socketio.on('request_state')
+def handle_request_state(data):
+    room_id = data['room_id']
+    game_state = game_manager.get_room_info(room_id)
+    if game_state:
+        emit('request_state_response', game_state, room=request.sid)
+    else:
+        emit('error', {'message': 'Room does not exist'}, room=request.sid)
+
+
 if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
     socketio.run(app, debug=True)

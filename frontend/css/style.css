@@ -2,8 +2,8 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #121212;
+  color: #e0e0e0;
 }
 
 .container {
@@ -15,15 +15,16 @@ body {
 h1,
 h2,
 h3 {
-  color: #2c3e50;
+  color: #f6f4f8;
 }
 
 .join-section {
-  background: white;
+  background: #1e1e1e;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   margin-bottom: 30px;
+  border: 1px solid #333;
 }
 
 .form-group {
@@ -34,36 +35,53 @@ h3 {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
+  color: #f6f4f8;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border: 1px solid #444;
   border-radius: 4px;
   box-sizing: border-box;
 }
 
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #f6f4f8;
+  box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
+}
+
 button {
-  background-color: #3498db;
+  background-color: #6200ee;
   color: white;
   border: none;
   padding: 10px 15px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
+  transition: background-color 0.3s;
 }
 
 button:hover {
-  background-color: #2980b9;
+  background-color: #3700b3;
+}
+
+button:disabled {
+  background-color: #444;
+  cursor: not-allowed;
 }
 
 .games-list {
-  background: white;
+  background: #1e1e1e;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
 }
 
 .games-container {
@@ -74,15 +92,27 @@ button:hover {
 }
 
 .game-card {
-  background: #f9f9f9;
+  background: #2d2d2d;
   padding: 15px;
   border-radius: 6px;
-  border-left: 4px solid #3498db;
+  border-left: 4px solid #f6f4f8;
+  transition: transform 0.2s;
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .game-card h3 {
   margin-top: 0;
-  color: #3498db;
+  color: #f6f4f8;
+}
+
+.game-time {
+  color: #aaa;
+  font-size: 0.9em;
+  margin-top: 5px;
 }
 
 .game-actions {
@@ -104,32 +134,52 @@ button:hover {
 
 .game-info {
   flex: 1;
-  background: white;
+  background: #1e1e1e;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
 }
 
 #move-history-container {
   margin-top: 20px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #eee;
+  border: 1px solid #444;
   padding: 10px;
   border-radius: 4px;
+  background-color: #2d2d2d;
 }
 
 #move-history div {
   padding: 5px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #444;
 }
 
 #move-history div:nth-child(odd) {
-  background-color: #f9f9f9;
+  background-color: #252525;
 }
 
 .hidden {
   display: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
 }
 
 @media (max-width: 768px) {
@@ -141,22 +191,53 @@ button:hover {
     width: 100% !important;
   }
 }
-.game-card {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 6px;
-  border-left: 4px solid #3498db;
-  margin-bottom: 15px;
-}
-
-.game-time {
-  color: #666;
-  font-size: 0.9em;
-  margin-top: 5px;
-}
 
 .games-container {
   max-height: 500px;
   overflow-y: auto;
   padding-right: 10px;
+}
+
+/* Additional dark mode elements */
+a {
+  color: #f6f4f8;
+}
+
+a:hover {
+  color: #9a67ea;
+}
+
+hr {
+  border-color: #444;
+}
+
+/* Status messages */
+.status-message {
+  color: #03dac6;
+  padding: 10px;
+  background-color: #1e2e2e;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.error-message {
+  color: #cf6679;
+  padding: 10px;
+  background-color: #2e1e1e;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+#white-captured,
+#black-captured {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.captured-piece {
+  width: 30px;
+  height: 30px;
+  background-size: contain;
 }

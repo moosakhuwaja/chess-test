@@ -15,6 +15,10 @@ class GameState:
         self.last_move_time = time.time()
         self.draw_offered_by = None
         self.move_history = []
+        self.white_captured = []  # Pieces captured by white
+        self.black_captured = []  # Pieces captured by black
+        self.white_score = 0  # Score for white
+        self.black_score = 0  # Score for black
 
     def to_dict(self):
         return {
@@ -26,7 +30,11 @@ class GameState:
             'watchers': list(self.watchers),
             'turn': 'white' if self.board.turn else 'black',
             'draw_offered': self.draw_offered_by,
-            'move_history': self.move_history
+            'move_history': self.move_history,
+            'white_captured': self.white_captured,
+            'black_captured': self.black_captured,
+            'white_score': self.white_score,
+            'black_score': self.black_score
         }
 
 
@@ -37,6 +45,14 @@ class GameManager:
         self.live_games = []
         self.ended_games = []
         self.all_games = []
+        self.piece_values = {
+            chess.PAWN: 1,
+            chess.KNIGHT: 3,
+            chess.BISHOP: 3,
+            chess.ROOK: 5,
+            chess.QUEEN: 9,
+            chess.KING: 0
+        }
 
     def join_room(self, room_id, player_sid, role, color=None):
         if room_id not in self.rooms:
@@ -74,7 +90,6 @@ class GameManager:
 
         game_state = self.rooms[room_id]
 
-        # Check if player is allowed to move
         if (game_state.board.turn == chess.WHITE and player_sid != game_state.white_player) or \
            (game_state.board.turn == chess.BLACK and player_sid != game_state.black_player):
             return {'success': False, 'message': 'Not your turn'}
@@ -88,6 +103,22 @@ class GameManager:
 
         if chess_move not in game_state.board.legal_moves:
             return {'success': False, 'message': 'Illegal move'}
+
+        # Check for capture
+        captured_piece = None
+        if game_state.board.is_capture(chess_move):
+            # Get the captured piece
+            target_square = chess_move.to_square
+            captured_piece = game_state.board.piece_at(target_square)
+            if captured_piece:
+                piece_type = captured_piece.piece_type
+                # Update captured pieces and score
+                if game_state.board.turn == chess.WHITE:
+                    game_state.black_captured.append(piece_type)
+                    game_state.white_score += self.piece_values[piece_type]
+                else:
+                    game_state.white_captured.append(piece_type)
+                    game_state.black_score += self.piece_values[piece_type]
 
         game_state.board.push(chess_move)
         game_state.last_move_time = time.time()
@@ -113,7 +144,8 @@ class GameManager:
             'success': True,
             'fen': game_state.board.fen(),
             'status': status,
-            'result': game_state.result
+            'result': game_state.result,
+            'captured_piece': captured_piece.piece_type if captured_piece else None
         }
 
     def resign(self, room_id, player_sid):

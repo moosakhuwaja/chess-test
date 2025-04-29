@@ -19,21 +19,21 @@
         <h1>Chess Game - <span id="room-id-display"></span></h1>
 
         <div class="game-container">
-            <div id="board" style="width: 400px"></div>
+            <div id="board" style="width: 550px"></div>
 
             <div class="game-info">
                 <div id="game-status">Loading game...</div>
                 <div id="players">
-                    <div>White: <span id="white-player">-</span></div>
-                    <div>Black: <span id="black-player">-</span></div>
+                    <div>White: <span id="white-player">-</span> (Score: <span id="white-score">0</span>)</div>
+                    <div id="white-captured"></div>
+                    <div>Black: <span id="black-player">-</span> (Score: <span id="black-score">0</span>)</div>
+                    <div id="black-captured"></div>
                     <div>Watchers: <span id="watchers-count">0</span></div>
                 </div>
-
                 <div id="move-history-container">
                     <h3>Move History</h3>
                     <div id="move-history"></div>
                 </div>
-
                 <div id="game-controls" class="hidden">
                     <button id="resign-btn">Resign</button>
                     <button id="offer-draw-btn">Offer Draw</button>
